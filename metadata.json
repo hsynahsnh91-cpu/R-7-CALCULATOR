@@ -1,0 +1,6 @@
+{
+  "name": "R-7 Calculator",
+  "description": "Precision engineering, scientific, programmer, and unit conversion calculator R-7.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

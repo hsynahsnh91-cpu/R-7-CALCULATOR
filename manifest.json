@@ -1,0 +1,15 @@
+{
+  "name": "R-7 Precision Calculator",
+  "short_name": "R-7",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#16181d",
+  "theme_color": "#16181d",
+  "icons": [
+    {
+      "src": "app/src/main/res/mipmap-xxxhdpi/ic_launcher.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}

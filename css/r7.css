@@ -1,0 +1,810 @@
+/* ==========================================================================
+   R-7 Precision Calculator Design System
+   Hardware: Dark charcoal metal (#16181d), Phosphor green LCD (#9db89a on #101410)
+   Accents: Single vintage orange (#e8842c) strictly on '=' button.
+   Zero decorative gradients, zero glassmorphism, zero colored shadows.
+   ========================================================================== */
+
+:root {
+  /* Chassis & Panels */
+  --r7-chassis-bg: #16181d;
+  --r7-panel-bg: #1c1f26;
+  --r7-panel-border: #282c35;
+  --r7-text-primary: #e6e8ec;
+  --r7-text-secondary: #9aa0a6;
+  --r7-text-muted: #60646c;
+  
+  /* Buttons */
+  --r7-btn-bg: #22262f;
+  --r7-btn-border: #313642;
+  --r7-btn-text: #e6e8ec;
+  --r7-btn-hover: #2a2e38;
+  --r7-btn-active: #191c23;
+  --r7-btn-fn-bg: #1b1e25;
+  --r7-btn-fn-border: #2c313c;
+
+  /* Orange Accent (strictly for '=' button) */
+  --r7-orange: #e8842c;
+  --r7-orange-hover: #f0923e;
+  --r7-orange-active: #d6741e;
+  --r7-orange-text: #ffffff;
+
+  /* LCD Phosphor Dark (Default) */
+  --r7-lcd-bg: #101410;
+  --r7-lcd-border: #1a221a;
+  --r7-lcd-text: #9db89a;
+  --r7-lcd-dim: #445943;
+  --r7-lcd-error: #e06055;
+  --r7-lcd-preview: #637862;
+
+  /* Toast & Modal */
+  --r7-toast-bg: #282c36;
+  --r7-modal-overlay: rgba(10, 12, 16, 0.75);
+
+  /* Geometry & Grid */
+  --r7-radius-btn: 6px;
+  --r7-radius-panel: 10px;
+  --r7-spacing: 8px;
+  --r7-btn-min-size: 48px;
+
+  /* Typography */
+  --r7-font-ui: "IBM Plex Sans Arabic", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --r7-font-mono: "IBM Plex Mono", "SF Mono", "Consolas", "Roboto Mono", monospace;
+  --r7-transition: 100ms linear;
+}
+
+/* Light Theme (Ivory LCD) */
+[data-theme="light"] {
+  --r7-chassis-bg: #e6e4df;
+  --r7-panel-bg: #dad7d0;
+  --r7-panel-border: #c4c1ba;
+  --r7-text-primary: #1e2025;
+  --r7-text-secondary: #535760;
+  --r7-text-muted: #878c96;
+
+  --r7-btn-bg: #eceae5;
+  --r7-btn-border: #cac6be;
+  --r7-btn-text: #1a1c21;
+  --r7-btn-hover: #f4f2ee;
+  --r7-btn-active: #dedad2;
+  --r7-btn-fn-bg: #dedad2;
+  --r7-btn-fn-border: #bebab1;
+
+  --r7-lcd-bg: #f5f1e6;
+  --r7-lcd-border: #26282e;
+  --r7-lcd-text: #21242a;
+  --r7-lcd-dim: #8b8e96;
+  --r7-lcd-error: #c83226;
+  --r7-lcd-preview: #686c75;
+
+  --r7-toast-bg: #2b2e36;
+  --r7-modal-overlay: rgba(20, 22, 26, 0.6);
+}
+
+/* Reset & Box Sizing */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  background-color: var(--r7-chassis-bg);
+  color: var(--r7-text-primary);
+  font-family: var(--r7-font-ui);
+  font-size: 15px;
+  line-height: 1.4;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Main Container: Centered Precision Calculator */
+.r7-app-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  max-width: 580px;
+  margin: 0 auto;
+  padding: 12px 16px env(safe-area-inset-bottom, 12px) 16px;
+  background-color: var(--r7-chassis-bg);
+}
+
+/* Header & Mode Switcher */
+.r7-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--r7-panel-border);
+  margin-bottom: 10px;
+}
+
+.r7-branding {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.r7-model-name {
+  font-family: var(--r7-font-mono);
+  font-weight: 700;
+  font-size: 1.25rem;
+  letter-spacing: 0.05em;
+  color: var(--r7-text-primary);
+}
+
+.r7-version-tag {
+  font-family: var(--r7-font-mono);
+  font-size: 0.72rem;
+  color: var(--r7-text-muted);
+  background: var(--r7-panel-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--r7-panel-border);
+}
+
+.r7-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.r7-icon-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--r7-text-secondary);
+  border-radius: var(--r7-radius-btn);
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color var(--r7-transition), border-color var(--r7-transition);
+}
+
+.r7-icon-btn:hover {
+  background: var(--r7-panel-bg);
+  color: var(--r7-text-primary);
+  border-color: var(--r7-panel-border);
+}
+
+.r7-icon-btn:focus-visible {
+  outline: 2px solid var(--r7-orange);
+}
+
+/* Navigation Modes Pills */
+.r7-mode-nav {
+  display: flex;
+  gap: 4px;
+  background: var(--r7-panel-bg);
+  padding: 3px;
+  border-radius: 8px;
+  border: 1px solid var(--r7-panel-border);
+  margin-bottom: 10px;
+}
+
+.r7-mode-tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--r7-text-secondary);
+  font-family: var(--r7-font-ui);
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 6px 4px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all var(--r7-transition);
+  text-align: center;
+}
+
+.r7-mode-tab:hover {
+  color: var(--r7-text-primary);
+}
+
+.r7-mode-tab.active {
+  background: var(--r7-btn-bg);
+  color: var(--r7-text-primary);
+  border: 1px solid var(--r7-btn-border);
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   Internal LCD Screen (Authentic Phosphor / Ivory Display)
+   Always dir="ltr" as real calculators function
+   ========================================================================== */
+.r7-lcd-chassis {
+  background-color: var(--r7-lcd-bg);
+  border: 2px solid var(--r7-lcd-border);
+  border-radius: var(--r7-radius-panel);
+  padding: 10px 14px;
+  color: var(--r7-lcd-text);
+  font-family: var(--r7-font-mono);
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  direction: ltr !important;
+  text-align: right;
+  transition: background-color var(--r7-transition), border-color var(--r7-transition);
+}
+
+.r7-lcd-chassis.flash {
+  filter: brightness(2.2);
+}
+
+/* Status Line (Top of LCD) */
+.r7-lcd-status-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.72rem;
+  height: 18px;
+  margin-bottom: 4px;
+  color: var(--r7-lcd-dim);
+  letter-spacing: 0.08em;
+}
+
+.r7-lcd-badges {
+  display: flex;
+  gap: 8px;
+}
+
+.r7-badge {
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.r7-badge.active {
+  color: var(--r7-lcd-text);
+  border-color: var(--r7-lcd-dim);
+}
+
+.r7-badge.memory-badge:not(.active) {
+  opacity: 0;
+}
+
+.r7-angle-toggle {
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--r7-lcd-text);
+  font-family: inherit;
+  font-size: inherit;
+  padding: 0 4px;
+  border-radius: 2px;
+}
+
+.r7-angle-toggle:hover {
+  border-color: var(--r7-lcd-dim);
+}
+
+/* Expression & Live Preview Line */
+.r7-lcd-expr-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  min-height: 22px;
+  font-size: 0.92rem;
+  overflow: hidden;
+}
+
+.r7-lcd-preview {
+  font-size: 0.82rem;
+  color: var(--r7-lcd-preview);
+  font-weight: 400;
+  transition: opacity 120ms;
+  white-space: nowrap;
+}
+
+.r7-lcd-expr {
+  color: var(--r7-lcd-dim);
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+  text-align: right;
+  flex: 1;
+  margin-left: 10px;
+}
+.r7-lcd-expr::-webkit-scrollbar { display: none; }
+
+.dim-paren {
+  opacity: 0.45;
+}
+
+/* Main Digits Readout (Tabular numbers) */
+.r7-lcd-main {
+  font-size: 2.15rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  color: var(--r7-lcd-text);
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+.r7-lcd-main::-webkit-scrollbar { display: none; }
+
+.r7-lcd-main.error-text {
+  color: var(--r7-lcd-error);
+  font-size: 1.5rem;
+}
+
+/* Bottom Status Line (Errors / Info) */
+.r7-lcd-status-bottom {
+  min-height: 16px;
+  font-size: 0.72rem;
+  color: var(--r7-lcd-error);
+  text-align: left;
+  letter-spacing: 0.03em;
+  font-family: var(--r7-font-ui);
+}
+
+/* ==========================================================================
+   Programmer Mode Readout Panel (Simultaneous 4 Bases)
+   ========================================================================== */
+.r7-prog-readout {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  background: var(--r7-lcd-bg);
+  border: 1px solid var(--r7-lcd-border);
+  border-radius: var(--r7-radius-panel);
+  padding: 6px 12px;
+  font-family: var(--r7-font-mono);
+  font-size: 0.78rem;
+  margin-bottom: 10px;
+  direction: ltr !important;
+}
+
+.r7-base-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--r7-lcd-dim);
+  transition: all var(--r7-transition);
+}
+
+.r7-base-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--r7-lcd-text);
+}
+
+.r7-base-row.active {
+  color: var(--r7-lcd-text);
+  background: rgba(255, 255, 255, 0.07);
+  font-weight: 600;
+  border-left: 2px solid var(--r7-orange);
+}
+
+.r7-base-label {
+  font-weight: 700;
+  width: 36px;
+}
+
+.r7-base-val {
+  overflow-x: auto;
+  white-space: nowrap;
+  text-align: right;
+  flex: 1;
+}
+
+/* ==========================================================================
+   Keypads & Buttons Grid
+   4px grid, 6px radius, >=44px touch targets (>=52px on mobile)
+   ========================================================================== */
+.r7-keypad-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.r7-grid {
+  display: grid;
+  gap: var(--r7-spacing);
+  width: 100%;
+}
+
+.r7-grid-5cols {
+  grid-template-columns: repeat(5, 1fr);
+}
+
+.r7-grid-4cols {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.r7-grid-6cols {
+  grid-template-columns: repeat(6, 1fr);
+}
+
+/* Buttons */
+.r7-btn {
+  background-color: var(--r7-btn-bg);
+  border: 1px solid var(--r7-btn-border);
+  color: var(--r7-btn-text);
+  border-radius: var(--r7-radius-btn);
+  font-family: var(--r7-font-mono);
+  font-size: 1.15rem;
+  font-weight: 500;
+  min-height: var(--r7-btn-min-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 60ms linear, background-color var(--r7-transition), border-color var(--r7-transition);
+  position: relative;
+  outline: none;
+}
+
+.r7-btn:hover {
+  background-color: var(--r7-btn-hover);
+}
+
+.r7-btn:focus-visible {
+  outline: 2px solid var(--r7-text-secondary);
+}
+
+.r7-btn:active {
+  transform: translateY(1px);
+  filter: brightness(0.94);
+  background-color: var(--r7-btn-active);
+}
+
+.r7-btn:disabled {
+  opacity: 0.28;
+  cursor: not-allowed;
+  transform: none !important;
+  filter: none !important;
+}
+
+/* Function & Memory Buttons */
+.r7-btn-fn {
+  background-color: var(--r7-btn-fn-bg);
+  border-color: var(--r7-btn-fn-border);
+  color: var(--r7-text-secondary);
+  font-size: 0.92rem;
+}
+
+.r7-btn-fn:hover {
+  color: var(--r7-text-primary);
+}
+
+.r7-btn-op {
+  color: var(--r7-text-primary);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+/* Equals Button: STRICTLY ONE ORANGE COLOR (#e8842c) */
+.r7-btn-equal {
+  background-color: var(--r7-orange) !important;
+  border-color: var(--r7-orange) !important;
+  color: var(--r7-orange-text) !important;
+  font-weight: 700;
+  font-size: 1.35rem;
+}
+
+.r7-btn-equal:hover {
+  background-color: var(--r7-orange-hover) !important;
+}
+
+.r7-btn-equal:active {
+  background-color: var(--r7-orange-active) !important;
+}
+
+.r7-btn-equal:focus-visible {
+  outline: 2px solid var(--r7-text-primary);
+}
+
+/* Memory Row Bar */
+.r7-mem-bar {
+  display: flex;
+  gap: var(--r7-spacing);
+  margin-bottom: 8px;
+}
+
+.r7-mem-bar .r7-btn {
+  flex: 1;
+  min-height: 38px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* Converter Screen Layout */
+.r7-converter-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.r7-conv-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--r7-panel-bg);
+  border: 1px solid var(--r7-panel-border);
+  border-radius: var(--r7-radius-panel);
+  padding: 12px;
+}
+
+.r7-conv-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.r7-conv-select {
+  background: var(--r7-btn-bg);
+  border: 1px solid var(--r7-btn-border);
+  color: var(--r7-text-primary);
+  font-family: var(--r7-font-ui);
+  font-size: 0.9rem;
+  padding: 6px 10px;
+  border-radius: var(--r7-radius-btn);
+  outline: none;
+  cursor: pointer;
+}
+
+.r7-conv-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.r7-conv-input {
+  flex: 1;
+  background: var(--r7-lcd-bg);
+  border: 1px solid var(--r7-lcd-border);
+  color: var(--r7-lcd-text);
+  font-family: var(--r7-font-mono);
+  font-size: 1.4rem;
+  padding: 8px 12px;
+  border-radius: var(--r7-radius-btn);
+  text-align: right;
+  direction: ltr !important;
+  outline: none;
+}
+
+.r7-conv-result {
+  flex: 1;
+  background: var(--r7-lcd-bg);
+  border: 1px solid var(--r7-lcd-border);
+  color: var(--r7-lcd-text);
+  font-family: var(--r7-font-mono);
+  font-size: 1.4rem;
+  padding: 8px 12px;
+  border-radius: var(--r7-radius-btn);
+  text-align: right;
+  direction: ltr !important;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* Modals & Drawers (History, Settings, About) */
+.r7-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--r7-modal-overlay);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms linear;
+}
+
+.r7-modal-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.r7-modal {
+  width: 100%;
+  max-width: 580px;
+  max-height: 85vh;
+  background: var(--r7-panel-bg);
+  border: 1px solid var(--r7-panel-border);
+  border-top-left-radius: 14px;
+  border-top-right-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  transform: translateY(20px);
+  transition: transform 120ms linear;
+}
+
+.r7-modal-overlay.open .r7-modal {
+  transform: translateY(0);
+}
+
+.r7-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--r7-panel-border);
+  margin-bottom: 12px;
+}
+
+.r7-modal-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--r7-text-primary);
+}
+
+.r7-modal-body {
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* History List Items */
+.r7-history-search {
+  background: var(--r7-btn-bg);
+  border: 1px solid var(--r7-btn-border);
+  color: var(--r7-text-primary);
+  font-family: var(--r7-font-ui);
+  padding: 8px 12px;
+  border-radius: var(--r7-radius-btn);
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.r7-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.r7-history-item {
+  background: var(--r7-btn-bg);
+  border: 1px solid var(--r7-btn-border);
+  border-radius: var(--r7-radius-btn);
+  padding: 10px 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: all var(--r7-transition);
+}
+
+.r7-history-item:hover {
+  background: var(--r7-btn-hover);
+  border-color: var(--r7-text-secondary);
+}
+
+.r7-history-item-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--r7-text-muted);
+  font-family: var(--r7-font-mono);
+}
+
+.r7-history-expr {
+  font-family: var(--r7-font-mono);
+  font-size: 0.88rem;
+  color: var(--r7-text-secondary);
+  direction: ltr !important;
+  text-align: right;
+}
+
+.r7-history-result {
+  font-family: var(--r7-font-mono);
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--r7-text-primary);
+  direction: ltr !important;
+  text-align: right;
+}
+
+.r7-empty-history {
+  padding: 30px 16px;
+  text-align: center;
+  color: var(--r7-text-muted);
+  font-size: 0.95rem;
+}
+
+/* Toast Notification */
+.r7-toast {
+  position: fixed;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-30px);
+  background: var(--r7-toast-bg);
+  color: var(--r7-text-primary);
+  border: 1px solid var(--r7-panel-border);
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 140ms ease-out;
+  z-index: 2000;
+}
+
+.r7-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Settings Form Controls */
+.r7-setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--r7-panel-border);
+}
+
+.r7-setting-row:last-child {
+  border-bottom: none;
+}
+
+.r7-setting-label {
+  font-size: 0.92rem;
+  color: var(--r7-text-primary);
+}
+
+/* Changelog entries */
+.r7-changelog-entry {
+  background: var(--r7-btn-bg);
+  border: 1px solid var(--r7-btn-border);
+  border-radius: var(--r7-radius-btn);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.r7-changelog-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.r7-changelog-notes {
+  font-size: 0.82rem;
+  color: var(--r7-text-secondary);
+  line-height: 1.45;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .r7-app-container {
+    padding: 8px 10px calc(env(safe-area-inset-bottom, 8px) + 6px) 10px;
+  }
+  .r7-btn {
+    min-height: 52px; /* >= 52px on mobile per spec */
+  }
+  .r7-lcd-main {
+    font-size: 1.85rem;
+    min-height: 44px;
+  }
+}

@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#16181d">
+  <meta name="description" content="آلة حاسبة دقيقة للمهندسين والطلبة والمحاسبين">
+  <title>R-7 Calculator</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="css/r7.css">
+</head>
+<body>
+  <div class="r7-app-container">
+    <!-- Top Header & Device Branding -->
+    <header class="r7-header">
+      <div class="r7-branding">
+        <span class="r7-model-name">R-7</span>
+        <span class="r7-version-tag">1.2.0</span>
+      </div>
+      <div class="r7-header-actions">
+        <button id="btnOpenHistory" class="r7-icon-btn" aria-label="سجل العمليات" title="السجل (h)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="9"/>
+            <polyline points="12 7 12 12 15 15"/>
+          </svg>
+        </button>
+        <button id="btnOpenSettings" class="r7-icon-btn" aria-label="إعدادات الحاسبة" title="الإعدادات">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
+        <button id="btnOpenAbout" class="r7-icon-btn" aria-label="حول R-7" title="حول الموديل">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="9"/>
+            <line x1="12" y1="8" x2="12" y2="8.01"/>
+            <line x1="12" y1="12" x2="12" y2="16"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- 4 Modes Tabs -->
+    <nav class="r7-mode-nav" role="tablist" aria-label="أوضاع الحاسبة">
+      <button class="r7-mode-tab active" data-mode="standard" role="tab" aria-selected="true">قياسي</button>
+      <button class="r7-mode-tab" data-mode="scientific" role="tab" aria-selected="false">علمي</button>
+      <button class="r7-mode-tab" data-mode="programmer" role="tab" aria-selected="false">مبرمج</button>
+      <button class="r7-mode-tab" data-mode="converter" role="tab" aria-selected="false">محوّل</button>
+    </nav>
+
+    <!-- Internal LCD Screen (Phosphor green or ivory, strictly dir="ltr") -->
+    <section class="r7-lcd-chassis" id="lcdContainer" aria-live="polite">
+      <div class="r7-lcd-status-top">
+        <div class="r7-lcd-badges">
+          <span class="r7-badge active" id="lcdModeBadge">STD</span>
+          <button class="r7-angle-toggle" id="lcdAngleBadge" title="تبديل وحدة الزوايا">DEG</button>
+          <span class="r7-badge memory-badge" id="lcdMemoryBadge">M</span>
+        </div>
+        <div class="r7-lcd-preview" id="lcdPreviewLine" aria-hidden="true"></div>
+      </div>
+
+      <div class="r7-lcd-expr-row">
+        <div class="r7-lcd-expr" id="lcdExprLine"></div>
+      </div>
+
+      <div class="r7-lcd-main" id="lcdMainLine">0</div>
+
+      <div class="r7-lcd-status-bottom" id="lcdStatusLine" role="alert"></div>
+    </section>
+
+    <!-- Programmer Mode Readout Panel (Simultaneous 4 Bases) -->
+    <div class="r7-prog-readout" id="progReadout" style="display: none;">
+      <div class="r7-base-row active" id="progRowHEX">
+        <span class="r7-base-label">HEX</span>
+        <span class="r7-base-val" id="progHexVal">0</span>
+      </div>
+      <div class="r7-base-row" id="progRowDEC">
+        <span class="r7-base-label">DEC</span>
+        <span class="r7-base-val" id="progDecVal">0</span>
+      </div>
+      <div class="r7-base-row" id="progRowOCT">
+        <span class="r7-base-label">OCT</span>
+        <span class="r7-base-val" id="progOctVal">0</span>
+      </div>
+      <div class="r7-base-row" id="progRowBIN">
+        <span class="r7-base-label">BIN</span>
+        <span class="r7-base-val" id="progBinVal">0000</span>
+      </div>
+    </div>
+
+    <!-- Memory Buttons Bar (Standard & Scientific) -->
+    <div class="r7-mem-bar" id="memBar">
+      <button class="r7-btn r7-btn-fn" data-act="mc">MC</button>
+      <button class="r7-btn r7-btn-fn" data-act="mr">MR</button>
+      <button class="r7-btn r7-btn-fn" data-act="m_plus">M+</button>
+      <button class="r7-btn r7-btn-fn" data-act="m_minus">M−</button>
+    </div>
+
+    <!-- Keypads Container -->
+    <main class="r7-keypad-container">
+      <!-- 1. STANDARD KEYPAD (4 columns) -->
+      <div class="r7-grid r7-grid-4cols" id="keypadStandard">
+        <button class="r7-btn r7-btn-fn" data-act="clear_all">AC</button>
+        <button class="r7-btn r7-btn-fn" data-act="backspace" aria-label="حذف حرف">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>
+            <line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/>
+          </svg>
+        </button>
+        <button class="r7-btn r7-btn-fn" data-char="%" aria-label="نسبة مئوية">%</button>
+        <button class="r7-btn r7-btn-op" data-char="÷">÷</button>
+
+        <button class="r7-btn" data-char="7">7</button>
+        <button class="r7-btn" data-char="8">8</button>
+        <button class="r7-btn" data-char="9">9</button>
+        <button class="r7-btn r7-btn-op" data-char="×">×</button>
+
+        <button class="r7-btn" data-char="4">4</button>
+        <button class="r7-btn" data-char="5">5</button>
+        <button class="r7-btn" data-char="6">6</button>
+        <button class="r7-btn r7-btn-op" data-char="−">−</button>
+
+        <button class="r7-btn" data-char="1">1</button>
+        <button class="r7-btn" data-char="2">2</button>
+        <button class="r7-btn" data-char="3">3</button>
+        <button class="r7-btn r7-btn-op" data-char="+">+</button>
+
+        <button class="r7-btn r7-btn-fn" data-act="sign">±</button>
+        <button class="r7-btn" data-char="0">0</button>
+        <button class="r7-btn" data-char=".">.</button>
+        <button class="r7-btn r7-btn-equal" data-act="equals">=</button>
+      </div>
+
+      <!-- 2. SCIENTIFIC KEYPAD (5 columns) -->
+      <div class="r7-grid r7-grid-5cols" id="keypadScientific" style="display: none;">
+        <button class="r7-btn r7-btn-fn" data-char="sin(">sin</button>
+        <button class="r7-btn r7-btn-fn" data-char="cos(">cos</button>
+        <button class="r7-btn r7-btn-fn" data-char="tan(">tan</button>
+        <button class="r7-btn r7-btn-fn" data-act="clear_all">AC</button>
+        <button class="r7-btn r7-btn-fn" data-act="backspace" aria-label="حذف حرف">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>
+            <line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/>
+          </svg>
+        </button>
+
+        <button class="r7-btn r7-btn-fn" data-char="asin(">asin</button>
+        <button class="r7-btn r7-btn-fn" data-char="acos(">acos</button>
+        <button class="r7-btn r7-btn-fn" data-char="atan(">atan</button>
+        <button class="r7-btn r7-btn-fn" data-char="(">(</button>
+        <button class="r7-btn r7-btn-fn" data-char=")">)</button>
+
+        <button class="r7-btn r7-btn-fn" data-char="ln(">ln</button>
+        <button class="r7-btn r7-btn-fn" data-char="log(">log</button>
+        <button class="r7-btn r7-btn-fn" data-char="√(">√</button>
+        <button class="r7-btn r7-btn-fn" data-char="^">xʸ</button>
+        <button class="r7-btn r7-btn-op" data-char="÷">÷</button>
+
+        <button class="r7-btn r7-btn-fn" data-char="!">n!</button>
+        <button class="r7-btn" data-char="7">7</button>
+        <button class="r7-btn" data-char="8">8</button>
+        <button class="r7-btn" data-char="9">9</button>
+        <button class="r7-btn r7-btn-op" data-char="×">×</button>
+
+        <button class="r7-btn r7-btn-fn" data-char="1/(">1/x</button>
+        <button class="r7-btn" data-char="4">4</button>
+        <button class="r7-btn" data-char="5">5</button>
+        <button class="r7-btn" data-char="6">6</button>
+        <button class="r7-btn r7-btn-op" data-char="−">−</button>
+
+        <button class="r7-btn r7-btn-fn" data-char="π">π</button>
+        <button class="r7-btn" data-char="1">1</button>
+        <button class="r7-btn" data-char="2">2</button>
+        <button class="r7-btn" data-char="3">3</button>
+        <button class="r7-btn r7-btn-op" data-char="+">+</button>
+
+        <button class="r7-btn r7-btn-fn" data-char="e">e</button>
+        <button class="r7-btn r7-btn-fn" data-act="sign">±</button>
+        <button class="r7-btn" data-char="0">0</button>
+        <button class="r7-btn" data-char=".">.</button>
+        <button class="r7-btn r7-btn-equal" data-act="equals">=</button>
+      </div>
+
+      <!-- 3. PROGRAMMER KEYPAD (5 columns) -->
+      <div class="r7-grid r7-grid-5cols" id="keypadProgrammer" style="display: none;">
+        <button class="r7-btn r7-btn-fn" data-act="AND">AND</button>
+        <button class="r7-btn r7-btn-fn" data-act="OR">OR</button>
+        <button class="r7-btn r7-btn-fn" data-act="NOT">NOT</button>
+        <button class="r7-btn r7-btn-fn" data-act="clear_all">AC</button>
+        <button class="r7-btn r7-btn-fn" data-act="backspace" aria-label="حذف حرف">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>
+            <line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/>
+          </svg>
+        </button>
+
+        <button class="r7-btn r7-btn-fn" data-act="XOR">XOR</button>
+        <button class="r7-btn r7-btn-fn" data-act="SHL">SHL</button>
+        <button class="r7-btn r7-btn-fn" data-act="SHR">SHR</button>
+        <button class="r7-btn r7-btn-fn" data-act="%">MOD</button>
+        <button class="r7-btn r7-btn-op" data-act="/">÷</button>
+
+        <button class="r7-btn" data-char="A">A</button>
+        <button class="r7-btn" data-char="B">B</button>
+        <button class="r7-btn" data-char="7">7</button>
+        <button class="r7-btn" data-char="8">8</button>
+        <button class="r7-btn r7-btn-op" data-act="*">×</button>
+
+        <button class="r7-btn" data-char="C">C</button>
+        <button class="r7-btn" data-char="D">D</button>
+        <button class="r7-btn" data-char="4">4</button>
+        <button class="r7-btn" data-char="5">5</button>
+        <button class="r7-btn r7-btn-op" data-act="-">−</button>
+
+        <button class="r7-btn" data-char="E">E</button>
+        <button class="r7-btn" data-char="F">F</button>
+        <button class="r7-btn" data-char="1">1</button>
+        <button class="r7-btn" data-char="2">2</button>
+        <button class="r7-btn r7-btn-op" data-act="+">+</button>
+
+        <button class="r7-btn" data-char="9">9</button>
+        <button class="r7-btn" data-char="6">6</button>
+        <button class="r7-btn" data-char="3">3</button>
+        <button class="r7-btn" data-char="0">0</button>
+        <button class="r7-btn r7-btn-equal" data-act="equals">=</button>
+      </div>
+
+      <!-- 4. CONVERTER PANEL (13 Categories + Currencies) -->
+      <div class="r7-converter-panel" id="panelConverter" style="display: none;">
+        <div class="r7-conv-row">
+          <label class="r7-setting-label" for="convCatSelect">الفئة</label>
+          <select id="convCatSelect" class="r7-conv-select"></select>
+        </div>
+
+        <div class="r7-conv-row">
+          <div class="r7-conv-header">
+            <span class="r7-setting-label">من</span>
+            <select id="convFromSelect" class="r7-conv-select"></select>
+          </div>
+          <div class="r7-conv-input-row">
+            <input type="number" id="convInputField" class="r7-conv-input" value="100" step="any">
+          </div>
+        </div>
+
+        <div class="r7-conv-row">
+          <div class="r7-conv-header">
+            <span class="r7-setting-label">إلى</span>
+            <select id="convToSelect" class="r7-conv-select"></select>
+          </div>
+          <div class="r7-conv-result" id="convResultDisplay">37.8</div>
+        </div>
+
+        <div class="r7-conv-row" id="convCurrencyRow" style="display:none;">
+          <div style="font-size:0.78rem; color:var(--r7-text-secondary); margin-bottom:4px;">
+            أسعار صرف محلية محفوظة في الجهاز — صفر طلبات شبكة.
+          </div>
+          <button id="btnEditCurrencyRates" class="r7-btn r7-btn-fn" style="min-height:36px; font-size:0.85rem;">
+            تعديل أسعار الصرف
+          </button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="r7-toast" id="r7Toast" role="status"></div>
+
+  <!-- History Drawer / Modal -->
+  <div class="r7-modal-overlay" id="historyModalOverlay">
+    <div class="r7-modal" role="dialog" aria-label="سجل العمليات">
+      <div class="r7-modal-header">
+        <h2 class="r7-modal-title">سجل العمليات</h2>
+        <button id="btnCloseHistory" class="r7-icon-btn" aria-label="إغلاق">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <input type="text" id="historySearchInput" class="r7-history-search" placeholder="بحث في السجل...">
+      <div class="r7-modal-body" id="historyListContainer"></div>
+      <div style="display: flex; gap: 8px; margin-top: 10px;">
+        <button id="btnClearHistory" class="r7-btn r7-btn-fn" style="flex:1; min-height:40px; font-size:0.88rem;">مسح السجل</button>
+        <button id="btnExportHistory" class="r7-btn r7-btn-fn" style="flex:1; min-height:40px; font-size:0.88rem;">تصدير TXT</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- History Item Action Menu (Long press) -->
+  <div class="r7-modal-overlay" id="itemMenuModalOverlay">
+    <div class="r7-modal" style="max-height:300px;" role="dialog" aria-label="إجراءات العملية">
+      <div class="r7-modal-header">
+        <h3 class="r7-modal-title">خيارات</h3>
+        <button id="btnCloseItemMenu" class="r7-icon-btn" aria-label="إغلاق">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="r7-modal-body">
+        <button id="btnItemCopy" class="r7-btn r7-btn-fn" style="min-height:44px; font-size:0.95rem;">نسخ النتيجة</button>
+        <button id="btnItemInsertExpr" class="r7-btn r7-btn-fn" style="min-height:44px; font-size:0.95rem;">إدراج التعبير</button>
+        <button id="btnItemDelete" class="r7-btn r7-btn-fn" style="min-height:44px; font-size:0.95rem; color:var(--r7-lcd-error);">حذف</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="r7-modal-overlay" id="settingsModalOverlay">
+    <div class="r7-modal" role="dialog" aria-label="إعدادات الحاسبة">
+      <div class="r7-modal-header">
+        <h2 class="r7-modal-title">الإعدادات</h2>
+        <button id="btnCloseSettings" class="r7-icon-btn" aria-label="إغلاق">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="r7-modal-body">
+        <div class="r7-setting-row">
+          <span class="r7-setting-label">المظهر</span>
+          <select id="settingThemeSelect" class="r7-conv-select">
+            <option value="dark">داكن (فوسفوري)</option>
+            <option value="light">فاتح (عاجي)</option>
+          </select>
+        </div>
+
+        <div class="r7-setting-row">
+          <span class="r7-setting-label">اللغة</span>
+          <select id="settingLangSelect" class="r7-conv-select">
+            <option value="ar">العربية (RTL)</option>
+            <option value="en">English (LTR)</option>
+          </select>
+        </div>
+
+        <div class="r7-setting-row">
+          <span class="r7-setting-label">صوت النقرات (WebAudio)</span>
+          <input type="checkbox" id="settingSoundCheck" style="width:20px; height:20px;">
+        </div>
+
+        <div class="r7-setting-row">
+          <span class="r7-setting-label">الاهتزاز اللمسي</span>
+          <input type="checkbox" id="settingVibrationCheck" style="width:20px; height:20px;">
+        </div>
+
+        <div class="r7-setting-row">
+          <span class="r7-setting-label">خانات التقريب في المحوّل</span>
+          <input type="number" id="settingDecimalsInput" min="0" max="6" value="1" class="r7-history-search" style="width:70px; text-align:center;">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- About Modal (Engineering Tone, Realistic Changelog) -->
+  <div class="r7-modal-overlay" id="aboutModalOverlay">
+    <div class="r7-modal" role="dialog" aria-label="حول R-7">
+      <div class="r7-modal-header">
+        <h2 class="r7-modal-title">حول R-7</h2>
+        <button id="btnCloseAbout" class="r7-icon-btn" aria-label="إغلاق">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="r7-modal-body">
+        <div style="font-family:var(--r7-font-mono); font-size:1.1rem; font-weight:700;">R-7 Precision Calculator</div>
+        <div style="font-size:0.85rem; color:var(--r7-text-secondary);">الإصدار 1.2.0</div>
+        <div style="font-size:0.82rem; color:var(--r7-text-muted); margin-bottom:8px;">الترخيص: MIT License — أداة هندسية حرة ومصقولة</div>
+
+        <div style="font-weight:600; font-size:0.95rem; margin-top:6px; border-bottom:1px solid var(--r7-panel-border); padding-bottom:4px;">
+          سجل التغييرات
+        </div>
+
+        <div class="r7-changelog-entry">
+          <div class="r7-changelog-header">
+            <span>الإصدار 1.2.0</span>
+            <span style="color:var(--r7-text-muted);">2026-08-15</span>
+          </div>
+          <div class="r7-changelog-notes">
+            إضافة وضع المبرمج (HEX/DEC/OCT/BIN مع عمليات البت المنطقية وعرض 64 بت المتزامن)، ومحوّل الوحدات الشامل لـ 13 فئة هندسية مع أسعار الصرف المحلية المحفوظة في الجهاز بدون أي طلبات شبكة.
+          </div>
+        </div>
+
+        <div class="r7-changelog-entry">
+          <div class="r7-changelog-header">
+            <span>الإصدار 1.1.0</span>
+            <span style="color:var(--r7-text-muted);">2026-04-10</span>
+          </div>
+          <div class="r7-changelog-notes">
+            إضافة الوضع العلمي المتقدم مع الدوال المثلثية الدقيقة (DEG/RAD/GRAD)، واللوغاريتمات، والأقواس المتداخلة، ونظام السجل المستمر لـ 200 عملية مع البحث والتصدير النصي.
+          </div>
+        </div>
+
+        <div class="r7-changelog-entry">
+          <div class="r7-changelog-header">
+            <span>الإصدار 1.0.0</span>
+            <span style="color:var(--r7-text-muted);">2025-11-20</span>
+          </div>
+          <div class="r7-changelog-notes">
+            الإطلاق الأولي: محرك حسابي عشري بدقة تامة (0.1 + 0.2 = 0.3)، دلالة النسبة المئوية السياقية، والشاشة الفوسفورية ذات الترقيم الجدولي.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Currency Rates Editor Modal -->
+  <div class="r7-modal-overlay" id="currencyModalOverlay">
+    <div class="r7-modal" role="dialog" aria-label="تعديل أسعار الصرف">
+      <div class="r7-modal-header">
+        <h2 class="r7-modal-title">أسعار الصرف (مقابل 1 USD)</h2>
+        <button id="btnCloseCurrency" class="r7-icon-btn" aria-label="إغلاق">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="r7-modal-body" id="currencyRatesInputsContainer"></div>
+      <button id="btnSaveCurrencyRates" class="r7-btn r7-btn-equal" style="margin-top:10px; min-height:44px; font-size:1rem;">حفظ الأسعار</button>
+    </div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
